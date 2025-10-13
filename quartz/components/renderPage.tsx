@@ -1,14 +1,14 @@
+import { Element, ElementContent, Root } from "hast"
 import { render } from "preact-render-to-string"
-import { QuartzComponent, QuartzComponentProps } from "./types"
-import HeaderConstructor from "./Header"
-import BodyConstructor from "./Body"
-import { JSResourceToScriptElement, StaticResources } from "../util/resources"
-import { FullSlug, RelativeURL, joinSegments, normalizeHastElement } from "../util/path"
-import { clone } from "../util/clone"
 import { visit } from "unist-util-visit"
-import { Root, Element, ElementContent } from "hast"
 import { GlobalConfiguration } from "../cfg"
 import { i18n } from "../i18n"
+import { clone } from "../util/clone"
+import { FullSlug, RelativeURL, joinSegments, normalizeHastElement } from "../util/path"
+import { JSResourceToScriptElement, StaticResources } from "../util/resources"
+import BodyConstructor from "./Body"
+import HeaderConstructor from "./Header"
+import { QuartzComponent, QuartzComponentProps } from "./types"
 
 interface RenderComponents {
   head: QuartzComponent
@@ -237,32 +237,37 @@ export function renderPage(
       <Head {...componentData} />
       <body data-slug={slug}>
         <div id="quartz-root" class="page">
+          {/* page-header moved to root so it sits above left/center/right */}
+          <div className="page-header">
+            <Header {...componentData}>
+              {header.map((HeaderComponent) => (
+                <HeaderComponent {...componentData} />
+              ))}
+            </Header>
+          </div>
+
           <Body {...componentData}>
             {LeftComponent}
             <div class="center">
-              <div class="page-header">
-                <Header {...componentData}>
-                  {header.map((HeaderComponent) => (
-                    <HeaderComponent {...componentData} />
-                  ))}
-                </Header>
-                <div class="popover-hint">
-                  {beforeBody.map((BodyComponent) => (
-                    <BodyComponent {...componentData} />
-                  ))}
-                </div>
-              </div>
-              <Content {...componentData} />
-              <hr />
-              <div class="page-footer">
-                {afterBody.map((BodyComponent) => (
+              <div class="popover-hint">
+                {beforeBody.map((BodyComponent) => (
                   <BodyComponent {...componentData} />
                 ))}
               </div>
+
+              <Content {...componentData} />
+              <hr />
             </div>
             {RightComponent}
-            <Footer {...componentData} />
           </Body>
+
+          {/* page-footer also moved to root */}
+          <div class="page-footer">
+            {afterBody.map((BodyComponent) => (
+              <BodyComponent {...componentData} />
+            ))}
+            <Footer {...componentData} />
+          </div>
         </div>
       </body>
       {pageResources.js

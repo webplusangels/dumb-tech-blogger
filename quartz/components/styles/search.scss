@@ -65,6 +65,12 @@
 
       @media all and not ($desktop) {
         width: 90%;
+        margin-top: 8vh;
+      }
+
+      @media all and ($mobile) {
+        width: 95%;
+        margin-top: 6vh;
       }
 
       & > * {

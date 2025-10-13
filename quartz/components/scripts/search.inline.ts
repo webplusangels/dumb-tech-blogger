@@ -1,7 +1,7 @@
 import FlexSearch, { DefaultDocumentSearchResults } from "flexsearch"
 import { ContentDetails } from "../../plugins/emitters/contentIndex"
-import { registerEscapeHandler, removeAllChildren } from "./util"
 import { FullSlug, normalizeRelativeURLs, resolveRelative } from "../../util/path"
+import { registerEscapeHandler, removeAllChildren } from "./util"
 
 interface Item {
   id: number
@@ -198,7 +198,9 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
   function showSearch(searchTypeNew: SearchType) {
     searchType = searchTypeNew
     if (sidebar) sidebar.style.zIndex = "1"
+
     container.classList.add("active")
+    if (sidebar) sidebar.style.zIndex = "1"
     searchBar.focus()
   }
 

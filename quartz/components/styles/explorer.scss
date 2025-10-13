@@ -31,10 +31,10 @@
   flex-direction: column;
   overflow-y: hidden;
 
-  min-height: 1.2rem;
+  min-height: 1.5rem;
   flex: 0 1 auto;
   &.collapsed {
-    flex: 0 1 1.2rem;
+    flex: 0 1 1.5rem;
     & .fold {
       transform: rotateZ(-90deg);
     }
@@ -97,6 +97,7 @@ button.desktop-explorer {
   text-align: left;
   cursor: pointer;
   padding: 0;
+  padding-bottom: 0.25rem;
   color: var(--dark);
   display: flex;
   align-items: center;
@@ -105,6 +106,7 @@ button.desktop-explorer {
     font-size: 1rem;
     display: inline-block;
     margin: 0;
+    line-height: 1.4;
   }
 }
 
