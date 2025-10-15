@@ -123,7 +123,10 @@ if (!document.querySelector('script[type="importmap"]')) {
 
 (async () => {
   try {
-    const { init3DLogo } = await import('/static/logo-3d.js');
+    // Use relative path to work with baseUrl
+    const baseUrl = document.querySelector('base')?.href || window.location.origin + '/';
+    const scriptPath = new URL('static/logo-3d.js', baseUrl).href;
+    const { init3DLogo } = await import(scriptPath);
     
     function initLogo() {
       const container = document.querySelector('.page-title-3d-container');
