@@ -126,7 +126,11 @@ if (!document.querySelector('script[type="importmap"]')) {
   if (!container) return;
   var baseDir = container.getAttribute('data-basedir') || './';
   if (baseDir && !baseDir.endsWith('/')) baseDir += '/';
-  import(baseDir + 'static/logo-3d.js').then(function(m) {
+  
+  // Resolve to absolute URL to fix dynamic import in subfolders
+  var scriptUrl = new URL(baseDir + 'static/logo-3d.js', window.location.href).href;
+  
+  import(scriptUrl).then(function(m) {
     var initLogo = function() {
       var c = document.querySelector('.page-title-3d-container');
       if (c) {
