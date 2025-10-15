@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Logo Snapshot Generator</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        background: #1a1a1a;
+        color: white;
+        font-family: system-ui;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+
+      #container {
+        width: 100px;
+        height: 100px;
+        background: white;
+        border: 2px solid #333;
+      }
+
+      canvas {
+        display: block;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        max-width: 600px;
+      }
+
+      button {
+        padding: 10px 20px;
+        background: #0066cc;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      button:hover {
+        background: #0052a3;
+      }
+
+      .info {
+        background: #2a2a2a;
+        padding: 15px;
+        border-radius: 8px;
+        max-width: 600px;
+      }
+
+      .preview {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .preview-item {
+        text-align: center;
+      }
+
+      .preview-item img {
+        background: white;
+        padding: 10px;
+        border: 2px solid #333;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>3D Logo Snapshot Generator</h1>
+
+    <div class="info">
+      <p><strong>Instructions:</strong></p>
+      <ol>
+        <li>The 3D model will load automatically from <code>../quartz/static/logo.glb</code></li>
+        <li>Click "Download PNG" to save the snapshot</li>
+        <li>
+          Save the file as <code>logo-static.png</code> in the <code>quartz/static/</code> folder
+        </li>
+      </ol>
+    </div>
+
+    <div id="container"></div>
+
+    <div class="controls">
+      <button id="downloadBtn">📷 Download PNG</button>
+      <button id="rotateCW">↻ Rotate Right</button>
+      <button id="rotateCCW">↺ Rotate Left</button>
+      <button id="resetView">🔄 Reset View</button>
+    </div>
+
+    <div class="preview" id="preview" style="display: none">
+      <div class="preview-item">
+        <h3>Light Background</h3>
+        <img id="previewLight" width="100" height="100" />
+      </div>
+      <div class="preview-item">
+        <h3>Dark Background</h3>
+        <img id="previewDark" width="100" height="100" />
+      </div>
+    </div>
+
+    <div class="info" id="status">Loading Three.js...</div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three"
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js"
+
+      const container = document.getElementById("container")
+      const statusEl = document.getElementById("status")
+      const downloadBtn = document.getElementById("downloadBtn")
+      const rotateCWBtn = document.getElementById("rotateCW")
+      const rotateCCWBtn = document.getElementById("rotateCCW")
+      const resetViewBtn = document.getElementById("resetView")
+      const previewDiv = document.getElementById("preview")
+      const previewLight = document.getElementById("previewLight")
+      const previewDark = document.getElementById("previewDark")
+
+      // Setup scene
+      const scene = new THREE.Scene()
+      const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000)
+      const renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+        preserveDrawingBuffer: true,
+        powerPreference: "high-performance",
+      })
+
+      renderer.setSize(100, 100)
+      renderer.setPixelRatio(window.devicePixelRatio * 2) // Higher quality for export
+      renderer.setClearColor(0x000000, 0)
+      container.appendChild(renderer.domElement)
+
+      // Enhanced lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1.2)
+      scene.add(ambientLight)
+
+      const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8)
+      directionalLight1.position.set(5, 5, 5)
+      scene.add(directionalLight1)
+
+      const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.4)
+      directionalLight2.position.set(-5, -5, -5)
+      scene.add(directionalLight2)
+
+      camera.position.z = 3
+
+      let model = null
+      let userRotation = 0
+
+      // Load model
+      const loader = new GLTFLoader()
+      statusEl.textContent = "Loading 3D model..."
+
+      loader.load(
+        "../quartz/static/logo.glb",
+        (gltf) => {
+          model = gltf.scene
+
+          // Center and scale the model
+          const box = new THREE.Box3().setFromObject(model)
+          const center = box.getCenter(new THREE.Vector3())
+          const size = box.getSize(new THREE.Vector3())
+          const maxDim = Math.max(size.x, size.y, size.z)
+          const scale = 2 / maxDim
+
+          model.scale.set(scale, scale, scale)
+          model.position.sub(center.multiplyScalar(scale))
+
+          scene.add(model)
+          statusEl.textContent = '✓ Model loaded! Adjust rotation and click "Download PNG"'
+
+          // Enable controls
+          downloadBtn.disabled = false
+          rotateCWBtn.disabled = false
+          rotateCCWBtn.disabled = false
+          resetViewBtn.disabled = false
+        },
+        (progress) => {
+          if (progress.total > 0) {
+            const percent = ((progress.loaded / progress.total) * 100).toFixed(0)
+            statusEl.textContent = `Loading model: ${percent}%`
+          }
+        },
+        (error) => {
+          statusEl.textContent = "❌ Error loading model: " + error.message
+          statusEl.style.background = "#cc0000"
+          console.error("Error:", error)
+        },
+      )
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate)
+        if (model) {
+          model.rotation.y = userRotation
+        }
+        renderer.render(scene, camera)
+      }
+      animate()
+
+      // Controls
+      rotateCWBtn.addEventListener("click", () => {
+        userRotation += Math.PI / 8 // 22.5 degrees
+      })
+
+      rotateCCWBtn.addEventListener("click", () => {
+        userRotation -= Math.PI / 8
+      })
+
+      resetViewBtn.addEventListener("click", () => {
+        userRotation = 0
+      })
+
+      downloadBtn.addEventListener("click", () => {
+        if (!model) {
+          alert("Model not loaded yet!")
+          return
+        }
+
+        // Create a temporary canvas with white background for light theme
+        const canvas = renderer.domElement
+        const tempCanvas = document.createElement("canvas")
+        tempCanvas.width = canvas.width
+        tempCanvas.height = canvas.height
+        const ctx = tempCanvas.getContext("2d")
+
+        // Get current transparent render
+        const transparentDataUrl = canvas.toDataURL("image/png")
+
+        // Create download link
+        const link = document.createElement("a")
+        link.download = "logo-static.png"
+        link.href = transparentDataUrl
+        link.click()
+
+        // Show previews
+        previewLight.src = transparentDataUrl
+        previewDark.src = transparentDataUrl
+        previewDiv.style.display = "flex"
+
+        statusEl.textContent = '✓ PNG downloaded! Save it as "logo-static.png" in quartz/static/'
+        statusEl.style.background = "#006600"
+      })
+    </script>
+  </body>
+</html>

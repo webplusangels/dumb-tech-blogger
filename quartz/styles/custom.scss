@@ -105,11 +105,11 @@ html[lang^="ko"] code {
 /* Center content area with comfortable padding */
 .center {
   padding: 0 2rem;
-  
+
   @media all and (max-width: 1200px) {
     padding: 0 1.5rem;
   }
-  
+
   @media all and (max-width: 800px) {
     padding: 0 1rem;
   }
@@ -281,21 +281,21 @@ button.primary,
       margin-left: 0.3rem;
       margin-top: 0.2rem;
       margin-bottom: 0.2rem;
-      
+
       li {
         margin: 0.15rem 0;
-        
+
         a {
           font-size: 0.8rem;
           padding: 0.2rem 0.35rem;
         }
       }
-      
+
       // Third level
       ul {
         padding-left: 0.8rem;
         border-left-width: 1px;
-        
+
         li a {
           font-size: 0.75rem;
           padding: 0.18rem 0.3rem;
@@ -309,7 +309,7 @@ button.primary,
 // Folder containers
 .folder-container {
   margin: 0.25rem 0;
-  
+
   & div > a,
   & div > button span {
     font-size: 0.9rem !important;
@@ -317,7 +317,7 @@ button.primary,
     line-height: 1.5rem !important;
     color: var(--secondary);
   }
-  
+
   & div > button:hover span,
   & div > a:hover {
     color: var(--tertiary);
@@ -337,7 +337,7 @@ button.primary,
     margin-left: 6px;
     padding-left: 0.8rem;
     border-left: 1.5px solid color-mix(in srgb, var(--lightgray) 50%, var(--light) 50%);
-    
+
     // Lighten border for deeper nesting
     .folder-outer > ul {
       border-left-color: color-mix(in srgb, var(--lightgray) 40%, var(--light) 60%);

@@ -6,6 +6,7 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
 interface PageTitleOptions {
   logo?: string // Path to logo image (e.g., "/static/logo.png")
   logo3d?: string // Path to 3D model (GLTF or GLB format, e.g., "/static/logo.glb")
+  logoFallback?: string // Path to fallback image when 3D fails (e.g., "/static/icon.png")
   rotationSpeed?: number // Rotation speed in degrees per second (default: 10)
 }
 
@@ -17,6 +18,7 @@ const PageTitle: QuartzComponent = ({ fileData, cfg, displayClass }: QuartzCompo
   const opts = (PageTitle as any).opts as PageTitleOptions | undefined
   const logo = opts?.logo
   const logo3d = opts?.logo3d
+  const logoFallback = opts?.logoFallback
   const rotationSpeed = opts?.rotationSpeed ?? 10
 
   return (
@@ -27,7 +29,11 @@ const PageTitle: QuartzComponent = ({ fileData, cfg, displayClass }: QuartzCompo
             class="page-title-3d-container"
             data-model={baseDir + logo3d}
             data-rotation-speed={rotationSpeed}
+            data-fallback={logoFallback ? baseDir + logoFallback : ""}
           >
+            {logoFallback && (
+              <img src={baseDir + logoFallback} alt={title} class="page-title-3d-fallback" />
+            )}
             <canvas class="page-title-3d-canvas" width="100" height="100"></canvas>
           </div>
         ) : logo ? (
@@ -67,26 +73,43 @@ PageTitle.css = `
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.page-title-3d-fallback {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  z-index: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.page-title-3d-fallback.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .page-title-3d-canvas {
-  width: 100%;
-  height: 100%;
+  width: 100px;
+  height: 100px;
   display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.page-title-3d-canvas.loaded {
+  opacity: 1;
 }
 `
 
 PageTitle.afterDOMLoaded = `
-// Load Three.js and GLTFLoader using importmap for 3D model support
-const container3d = document.querySelector('.page-title-3d-container');
-if (container3d) {
-  const modelPath = container3d.getAttribute('data-model');
-  const rotationSpeed = parseFloat(container3d.getAttribute('data-rotation-speed') || '10');
-  const canvas = container3d.querySelector('.page-title-3d-canvas');
-  
-  console.log('3D Logo: Loading model from', modelPath);
-  
-  // Create import map for Three.js
+// Add import map for Three.js
+if (!document.querySelector('script[type="importmap"]')) {
   const importMap = document.createElement('script');
   importMap.type = 'importmap';
   importMap.textContent = JSON.stringify({
@@ -95,118 +118,36 @@ if (container3d) {
       'three/addons/': 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/'
     }
   });
-  document.head.appendChild(importMap);
-  
-  // Create and load the script
-  const script = document.createElement('script');
-  script.type = 'module';
-  script.textContent = \`
-    (async () => {
-      try {
-        const THREE = await import('three');
-        const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
-        
-        console.log('3D Logo: Modules loaded successfully');
-        
-        const canvas = document.querySelector('.page-title-3d-canvas');
-        if (!canvas) {
-          console.error('3D Logo: Canvas not found');
-          return;
-        }
-        
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ 
-          canvas, 
-          alpha: true, 
-          antialias: true,
-          powerPreference: 'high-performance'
-        });
-        
-        renderer.setSize(100, 100);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setClearColor(0x000000, 0);
-        
-        // Enhanced lighting for better visibility
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
-        scene.add(ambientLight);
-        
-        const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight1.position.set(5, 5, 5);
-        scene.add(directionalLight1);
-        
-        const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
-        directionalLight2.position.set(-5, -5, -5);
-        scene.add(directionalLight2);
-        
-        camera.position.z = 3;
-        
-        let model = null;
-        const loader = new GLTFLoader();
-        
-        console.log('3D Logo: Starting to load model...');
-        
-        loader.load(
-          '\${modelPath}',
-          (gltf) => {
-            console.log('3D Logo: Model loaded successfully');
-            model = gltf.scene;
-            
-            // Center and scale the model
-            const box = new THREE.Box3().setFromObject(model);
-            const center = box.getCenter(new THREE.Vector3());
-            const size = box.getSize(new THREE.Vector3());
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = 2 / maxDim;
-            
-            model.scale.set(scale, scale, scale);
-            model.position.sub(center.multiplyScalar(scale));
-            
-            scene.add(model);
-            console.log('3D Logo: Model added to scene and animating');
-          },
-          (progress) => {
-            if (progress.total > 0) {
-              const percent = (progress.loaded / progress.total * 100).toFixed(0);
-              console.log('3D Logo: Loading progress ' + percent + '%');
-            }
-          },
-          (error) => {
-            console.error('3D Logo: Error loading model', error);
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.fillStyle = '#888';
-              ctx.font = '9px sans-serif';
-              ctx.fillText('Load Failed', 10, 40);
-            }
-          }
-        );
-        
-        // Animation loop
-        const animate = () => {
-          requestAnimationFrame(animate);
-          if (model) {
-            model.rotation.y += (\${rotationSpeed} * Math.PI / 180) / 60;
-          }
-          renderer.render(scene, camera);
-        };
-        animate();
-        
-      } catch (err) {
-        console.error('3D Logo: Failed to load Three.js modules', err);
-        const canvas = document.querySelector('.page-title-3d-canvas');
-        const ctx = canvas?.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#888';
-          ctx.font = '10px sans-serif';
-          ctx.fillText('3D Error', 15, 40);
-        }
-      }
-    })();
-  \`;
-  
-  document.head.appendChild(script);
+  document.head.prepend(importMap);
 }
+
+(async () => {
+  const { init3DLogo } = await import('/static/logo-3d.js');
+  
+  function initLogo() {
+    const container = document.querySelector('.page-title-3d-container');
+    if (container) {
+      const canvas = container.querySelector('.page-title-3d-canvas');
+      const fallback = container.querySelector('.page-title-3d-fallback');
+      
+      // Reset states
+      if (canvas) {
+        canvas.classList.remove('loaded');
+      }
+      if (fallback) {
+        fallback.classList.remove('hidden');
+      }
+      
+      init3DLogo(container);
+    }
+  }
+  
+  // Initialize on first load
+  initLogo();
+  
+  // Re-initialize on navigation
+  document.addEventListener('nav', initLogo);
+})();
 `
 
 export default ((opts?: PageTitleOptions) => {

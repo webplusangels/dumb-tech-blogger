@@ -7,6 +7,7 @@ export const sharedPageComponents: SharedLayout = {
   header: [
     Component.PageTitle({
       logo3d: "/static/logo.glb",
+      logoFallback: "/static/logo-static.png",
       rotationSpeed: 8, // 초당 8도 회전 (조금 더 부드럽게)
     }),
     Component.Darkmode(),
@@ -30,11 +31,7 @@ export const defaultContentPageLayout: PageLayout = {
     Component.ContentMeta(),
     Component.TagList(),
   ],
-  left: [
-    Component.MobileOnly(Component.Spacer()),
-    Component.Search(),
-    Component.Explorer(),
-  ],
+  left: [Component.MobileOnly(Component.Spacer()), Component.Search(), Component.Explorer()],
   right: [
     Component.Graph(),
     Component.DesktopOnly(Component.TableOfContents()),
