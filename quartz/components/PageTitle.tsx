@@ -122,31 +122,35 @@ if (!document.querySelector('script[type="importmap"]')) {
 }
 
 (async () => {
-  const { init3DLogo } = await import('/static/logo-3d.js');
-  
-  function initLogo() {
-    const container = document.querySelector('.page-title-3d-container');
-    if (container) {
-      const canvas = container.querySelector('.page-title-3d-canvas');
-      const fallback = container.querySelector('.page-title-3d-fallback');
-      
-      // Reset states
-      if (canvas) {
-        canvas.classList.remove('loaded');
+  try {
+    const { init3DLogo } = await import('/static/logo-3d.js');
+    
+    function initLogo() {
+      const container = document.querySelector('.page-title-3d-container');
+      if (container) {
+        const canvas = container.querySelector('.page-title-3d-canvas');
+        const fallback = container.querySelector('.page-title-3d-fallback');
+        
+        // Reset states
+        if (canvas) {
+          canvas.classList.remove('loaded');
+        }
+        if (fallback) {
+          fallback.classList.remove('hidden');
+        }
+        
+        init3DLogo(container);
       }
-      if (fallback) {
-        fallback.classList.remove('hidden');
-      }
-      
-      init3DLogo(container);
     }
+    
+    // Initialize on first load
+    initLogo();
+    
+    // Re-initialize on navigation
+    document.addEventListener('nav', initLogo);
+  } catch (error) {
+    console.error('3D Logo: Failed to load module', error);
   }
-  
-  // Initialize on first load
-  initLogo();
-  
-  // Re-initialize on navigation
-  document.addEventListener('nav', initLogo);
 })();
 `
 

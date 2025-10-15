@@ -61,6 +61,8 @@ export async function init3DLogo(container) {
     let model = null
     const loader = new GLTFLoader()
 
+    console.log("3D Logo: Loading model from", modelPath)
+
     loader.load(
       modelPath,
       (gltf) => {
@@ -81,12 +83,18 @@ export async function init3DLogo(container) {
         setTimeout(() => {
           canvas.classList.add("loaded")
           if (fallbackImg) fallbackImg.classList.add("hidden")
-          console.log("3D Logo: Loaded")
+          console.log("3D Logo: Loaded successfully")
         }, 100)
       },
-      undefined,
+      (progress) => {
+        console.log(
+          "3D Logo: Loading progress",
+          Math.round((progress.loaded / progress.total) * 100) + "%",
+        )
+      },
       (error) => {
-        console.error("3D Logo: Error", error)
+        console.error("3D Logo: Failed to load model", error)
+        console.error("3D Logo: Model path was", modelPath)
         canvas.style.display = "none"
       },
     )
