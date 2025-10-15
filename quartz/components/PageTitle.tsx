@@ -30,6 +30,7 @@ const PageTitle: QuartzComponent = ({ fileData, cfg, displayClass }: QuartzCompo
             data-model={baseDir + logo3d}
             data-rotation-speed={rotationSpeed}
             data-fallback={logoFallback ? baseDir + logoFallback : ""}
+            data-base-dir={baseDir}
           >
             {logoFallback && (
               <img src={baseDir + logoFallback} alt={title} class="page-title-3d-fallback" />
@@ -121,10 +122,13 @@ if (!document.querySelector('script[type="importmap"]')) {
 }
 
 (function() {
-  var pathParts = window.location.pathname.split('/').filter(function(p) { return p; });
-  var depth = pathParts.length > 0 ? pathParts.length - 1 : 0;
-  var prefix = depth > 0 ? Array(depth + 1).join('../') : './';
-  import(prefix + 'static/logo-3d.js').then(function(m) {
+  var container = document.querySelector('.page-title-3d-container');
+  if (!container) return;
+  
+  var baseDir = container.getAttribute('data-base-dir') || './';
+  var scriptPath = baseDir + 'static/logo-3d.js';
+  
+  import(scriptPath).then(function(m) {
     var initLogo = function() {
       var c = document.querySelector('.page-title-3d-container');
       if (c) {
