@@ -30,6 +30,7 @@ const PageTitle: QuartzComponent = ({ fileData, cfg, displayClass }: QuartzCompo
             data-model={baseDir + logo3d}
             data-rotation-speed={rotationSpeed}
             data-fallback={logoFallback ? baseDir + logoFallback : ""}
+            data-basedir={baseDir}
           >
             {logoFallback && (
               <img src={baseDir + logoFallback} alt={title} class="page-title-3d-fallback" />
@@ -121,12 +122,10 @@ if (!document.querySelector('script[type="importmap"]')) {
 }
 
 (function() {
-  var path = window.location.pathname;
-  var baseUrl = 'dumb-tech-blogger';
-  var parts = path.split('/').filter(function(p) { return p && p !== baseUrl; });
-  var depth = parts.length > 0 ? parts.length - 1 : 0;
-  var prefix = depth > 0 ? Array(depth + 1).join('../') : './';
-  import(prefix + 'static/logo-3d.js').then(function(m) {
+  var container = document.querySelector('.page-title-3d-container');
+  if (!container) return;
+  var baseDir = container.getAttribute('data-basedir') || './';
+  import(baseDir + 'static/logo-3d.js').then(function(m) {
     var initLogo = function() {
       var c = document.querySelector('.page-title-3d-container');
       if (c) {
