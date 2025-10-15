@@ -108,52 +108,38 @@ PageTitle.css = `
 `
 
 PageTitle.afterDOMLoaded = `
-// Add import map for Three.js
 if (!document.querySelector('script[type="importmap"]')) {
-  const importMap = document.createElement('script');
-  importMap.type = 'importmap';
-  importMap.textContent = JSON.stringify({
-    imports: {
-      'three': 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
-      'three/addons/': 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/'
-    }
-  });
-  document.head.prepend(importMap);
+  document.head.prepend(Object.assign(document.createElement('script'), {
+    type: 'importmap',
+    textContent: JSON.stringify({
+      imports: {
+        'three': 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
+        'three/addons/': 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/'
+      }
+    })
+  }));
 }
 
-(async () => {
-  try {
-    // Use relative path to work with baseUrl
-    const baseUrl = document.querySelector('base')?.href || window.location.origin + '/';
-    const scriptPath = new URL('static/logo-3d.js', baseUrl).href;
-    const { init3DLogo } = await import(scriptPath);
-    
-    function initLogo() {
-      const container = document.querySelector('.page-title-3d-container');
-      if (container) {
-        const canvas = container.querySelector('.page-title-3d-canvas');
-        const fallback = container.querySelector('.page-title-3d-fallback');
-        
-        // Reset states
-        if (canvas) {
-          canvas.classList.remove('loaded');
-        }
-        if (fallback) {
-          fallback.classList.remove('hidden');
-        }
-        
-        init3DLogo(container);
+(function() {
+  var pathParts = window.location.pathname.split('/').filter(function(p) { return p; });
+  var depth = pathParts.length > 0 ? pathParts.length - 1 : 0;
+  var prefix = depth > 0 ? Array(depth + 1).join('../') : './';
+  import(prefix + 'static/logo-3d.js').then(function(m) {
+    var initLogo = function() {
+      var c = document.querySelector('.page-title-3d-container');
+      if (c) {
+        var canvas = c.querySelector('.page-title-3d-canvas');
+        var fallback = c.querySelector('.page-title-3d-fallback');
+        canvas && canvas.classList.remove('loaded');
+        fallback && fallback.classList.remove('hidden');
+        m.init3DLogo(c);
       }
-    }
-    
-    // Initialize on first load
+    };
     initLogo();
-    
-    // Re-initialize on navigation
     document.addEventListener('nav', initLogo);
-  } catch (error) {
-    console.error('3D Logo: Failed to load module', error);
-  }
+  }).catch(function(e) {
+    console.error('3D Logo: Failed to load module', e);
+  });
 })();
 `
 
